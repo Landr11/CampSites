@@ -98,7 +98,7 @@ body {
     justify-content: space-between;
 }
 
-.container .form-control{
+.jumbotron .container .form-control{
   width: 200px;
 margin-right: 3px;
 }
