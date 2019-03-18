@@ -19,16 +19,33 @@ var geocoder = NodeGeocoder(options);
 
 // CampGround Request  INDEX of all Campgrounds
 router.get("/", function(req, res){
-    console.log(req.user);
+    var noMatch = null;
+    if(req.query.search){
+        const regex = new RegExp(escapeRegex(req.query.search), 'gi');
+        Campground.find({name: regex}, function(err, campgrounds){
+        if(err){
+            console.log("There was an Error");
+            console.log(err);
+        } else {
+            
+            if(campgrounds.length < 1){
+                noMatch = "No campgrounds match that search, please try again.";
+            }
+            res.render("campgrounds/index", {campgrounds: campgrounds, currentUser: req.user, page: 'campgrounds', noMatch: noMatch});
+        }
+    });
+        
+    } else {
     //Get all camgrounds from the DB using mongoose MongoDB
     Campground.find({}, function(err, campgrounds){
         if(err){
             console.log("There was an Error");
             console.log(err);
         } else {
-            res.render("campgrounds/index", {campgrounds: campgrounds, currentUser: req.user, page: 'campgrounds'});
+            res.render("campgrounds/index", {campgrounds: campgrounds, currentUser: req.user, page: 'campgrounds', noMatch: noMatch});
         }
     });
+    }
 
     // res.render("campgrounds", {campgrounds: campgrounds});
 });
@@ -67,7 +84,6 @@ router.post("/", middleware.isLoggedIn, function(req, res){
             console.log(err);
         } else {
             //redirect back to campgrounds page
-            console.log(newlyCreated);
             res.redirect("/campgrounds");
         }
     });
@@ -111,7 +127,6 @@ router.get("/:id", function(req, res){
         if(err){
             console.log(err);
         } else {
-            console.log(foundCampground);
             //render SHOW(restfult route) template with provided ID
              res.render("campgrounds/show", {campground: foundCampground});
         }
@@ -189,7 +204,9 @@ router.delete("/:id", middleware.checkCampgroundOwnership, function(req, res){
 
 
 
-   
+function escapeRegex(text) {
+    return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+};
 
 module.exports = router;
 
