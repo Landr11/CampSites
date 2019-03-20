@@ -3,9 +3,35 @@ var router       = express.Router();
 var passport     = require("passport");
 var User         = require("../models/user");
 var Campground   = require("../models/campground");
+var Comment      = require("../models/comment");
 var async        = require("async");
 var nodemailer   = require("nodemailer");
 var crypto       = require("crypto");
+var middleware = require("../middleware");
+
+
+
+var multer = require('multer');
+var storage = multer.diskStorage({
+  filename: function(req, file, callback) {
+    callback(null, Date.now() + file.originalname);
+  }
+});
+var imageFilter = function (req, file, cb) {
+    // accept image files only
+    if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/i)) {
+        return cb(new Error('Only image files are allowed!'), false);
+    }
+    cb(null, true);
+};
+var upload = multer({ storage: storage, fileFilter: imageFilter});
+
+var cloudinary = require('cloudinary');
+cloudinary.config({ 
+  cloud_name: 'dp4ph44te', 
+  api_key: process.env.CLOUDINARY_API_KEY, 
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 
 var secretcode = process.env.SECRET_CODE;
@@ -26,13 +52,23 @@ router.get("/register", function(req, res){
 });
 
 
+
 //Post Route For Sign up logic
-router.post("/register", function(req, res){
-    //=====alternative code=====//
-    // User.register(new User({username: req.body.username})
-    //User.register(newUser, req.body.password);
+router.post("/register", upload.single("avatar"), function(req, res){
+  //Upload image to cloudinary and create new user
+  cloudinary.v2.uploader.upload(req.file.path, function(err, result){
+    
+    if(err){
+            req.flash("error", err.message);
+            return res.redirect("/register");
+        }
+    // add image url to user avatar
+      req.body.avatar = result.secure_url;
+   // add image id to user imageID
+      req.body.imageId = result.public_id;
+      
     var newUser = new User({
-        username: req.body.username, firstName: req.body.firstName, lastName: req.body.lastName, email: req.body.email, avatar: req.body.avatar
+        username: req.body.username, firstName: req.body.firstName, lastName: req.body.lastName, email: req.body.email, avatar: result.secure_url, imageId: result.public_id
         
     });
     if(req.body.admincode === secretcode){
@@ -49,7 +85,12 @@ router.post("/register", function(req, res){
         });
         
     });
-});
+    
+    
+  });
+    
+}); 
+
 
 
 //Get Route show the Login form 
@@ -243,7 +284,7 @@ router.get("/users/:id", function(req, res){
 
 
 //Edit User Profile show form Route
-router.get("/users/:id/edit", function(req, res){
+router.get("/users/:id/edit", middleware.checkUserOwnership, function(req, res){
   User.findById(req.params.id, function(err, foundUser){
      if(err){
             req.flash("error", "Something went wrong" );
@@ -253,15 +294,44 @@ router.get("/users/:id/edit", function(req, res){
        });
 });
 
+
 //Edit Profile PUT/UPDATE Route
-router.put("/users/:id", function(req, res){
-  User.findByIdAndUpdate(req.params.id, req.body.user, function(err, updatedUser){
-     if(err){
-            res.redirect("back");
-        } else {
-            res.redirect("/users/" + req.params.id);
+router.put("/users/:id", upload.single("avatar"), middleware.checkUserOwnership, function(req, res){
+    User.findById(req.params.id, async function(err, user){
+        if (err){
+          req.flash("error", err.message);
+          return res.redirect("back");
         }
-  });
+        try {
+            if (req.file) {
+                var result = await cloudinary.v2.uploader.upload(req.file.path);
+                user.avatar = result.secure_url;
+              }
+            user.username = req.body.user.username; 
+            user.firstName = req.body.user.firstName; 
+            user.lastName = req.body.user.lastName; 
+            user.description = req.body.user.description; 
+            user.email = req.body.user.email;
+            user.save();
+            //Updates Campground Owners Name To Match The New One
+            Campground.update({"author.id": user._id}, {$set: {"author.username": user.username}}, function(err, campground){
+                if(err){
+                    console.log(campground.author._id);
+                }
+            });
+            //Updates Comment Owners Name To Match New One    
+            Comment.update({"author.id": user._id}, {$set: {"author.username": user.username}}, function(err, Comment){
+                if(err){
+                    console.log(Comment.author._id);
+                }
+            });
+            req.flash("success","Successfully Updated!");
+            res.redirect("/users/" + user._id);
+          } catch (err) {
+                req.flash("error", err.message);
+                return res.redirect("back");
+            }
+    });
 });
 
 
@@ -287,5 +357,10 @@ router.delete("/users/:id", function(req, res){
 // }
 
 
+
+
+function escapeRegex(text) {
+    return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+};
 
 module.exports = router;

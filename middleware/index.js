@@ -59,6 +59,21 @@ middlewareObj.checkCommentOwnership = function(req, res, next){
 };
 
 
+middlewareObj.checkUserOwnership = function(req, res, next) {
+// is user logged in?
+      if(req.isAuthenticated()) {
+        if(req.user._id.equals(req.params.id) || req.user.isAdmin) {
+            next();
+        } else {
+            req.flash("error", "Access denied, this is not your profile.");
+            res.redirect("/users/" + req.params.id);
+        }
+    } else {
+        req.flash("error", "You are not logged in.");
+        res.redirect("/login");
+    }
+};
+
 middlewareObj.isLoggedIn = function(req, res, next){
     if(req.isAuthenticated()){
         return next();
