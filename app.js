@@ -22,7 +22,7 @@ var commentRoutes       = require("./routes/comments"),
 
 
 //mongoose.connect('mongodb://localhost:27017/yelp_camp_v14', { useNewUrlParser: true }); 
-mongoose.connect('mongodb://localhost:27017/yelp_camp_v13', {useNewUrlParser: true, useCreateIndex: true});
+mongoose.connect('mongodb://localhost:27017/yelp_camp_v15', {useNewUrlParser: true, useCreateIndex: true});
 
 
 //Seeding the site with data for testing
