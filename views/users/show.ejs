@@ -14,6 +14,10 @@
                 </form>
         <% } %> </span>
         
+        <% if(currentUser && user.id !== currentUser.id) { %>
+                <a href="/follow/<%= user.id %>"><button class="btn btn-sm btn-primary">Follow <%= user.username %></button></a>
+                <% } %>
+        
         </div>
         </div>
          <p><%= user.description %></p>

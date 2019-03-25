@@ -32,6 +32,22 @@
                   <li class="<%= typeof page !== 'undefined' && page === 'login' ? 'active' : '' %>"><a href="/login">Login</a></li>
                   <li class="<%= typeof page !== 'undefined' && page === 'register' ? 'active' : '' %>"><a href="/register">Sign Up</a></li>
               <% } else { %>
+              
+              <li class="dropdown nav-item">
+                      <a class="nav-link" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Notifications <span class="badge"><%= notifications.length %></span></a>
+                      <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="/notifications">View past notifications</a>
+                        </li>
+                        <% notifications.forEach(function(notification) { %>                          
+                            <li>
+                                <a class="dropdown-item" href="/notifications/<%= notification.id %>">
+                                    <%= notification.username %> created a new campground
+                                </a>
+                            </li>
+                        <% }); %>
+                      </ul>
+                  </li>
                   <li><a href="/users/<%=currentUser._id%>">Signed In As <%= currentUser.username %></a></li>
             
                   <li><a href="/logout">Logout</a></li>

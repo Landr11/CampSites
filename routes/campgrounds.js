@@ -2,6 +2,7 @@ var express = require("express");
 var router = express.Router();
 var Campground   = require("../models/campground");
 var Comment      = require("../models/comment");
+var Notification = require("../models/notification");
 var User         = require("../models/user");
 var middleware   = require("../middleware");
 
@@ -91,12 +92,16 @@ router.post("/", middleware.isLoggedIn, upload.single('image'), function(req, re
       id: req.user._id,
       username: req.user.username
   };
-  cloudinary.v2.uploader.upload(req.file.path, function(err, result){
+  cloudinary.v2.uploader.upload(req.file.path, async function(err, result){
+      if(err){
+          req.flash('error', err.message);
+          return res.redirect("back");
+      }
       //add cloudinary image url to the campground object under image property
       req.body.image = result.secure_url;
       //add image public_id to the imageId of the campground
       req.body.imageId = result.public_id;
-       geocoder.geocode(req.body.location, function (err, data) {
+      geocoder.geocode(req.body.location, async function (err, data) {
     if (err || !data.length) {
       req.flash('error', 'Invalid address');
       return res.redirect('back');
@@ -106,49 +111,31 @@ router.post("/", middleware.isLoggedIn, upload.single('image'), function(req, re
     var location = data[0].formattedAddress;
     var newCampground = {name: name, image: result.secure_url, imageId: result.public_id, description: desc, author:author, location: location, lat: lat, lng: lng, price: price};
     // Create a new campground and save to DB
-    Campground.create(newCampground, function(err, newlyCreated){
-        if(err){
-            req.flash('error', err.message);
-            return res.redirect("back");
-        } else {
-            console.log(newlyCreated.imageId);
-            //redirect back to campgrounds page
-            res.redirect("/campgrounds/" + newlyCreated.id);
+   try {
+          let campground = await Campground.create(newCampground);
+          let user = await User.findById(req.user._id).populate('followers').exec();
+          let newNotification = {
+            username: req.user.username,
+            campgroundId: campground.id
+          };
+          for(const follower of user.followers) {
+            let notification = await Notification.create(newNotification);
+            follower.notifications.push(notification);
+            follower.save();
+          }
+    
+          //redirect back to campgrounds page
+          req.flash("success", "New campground created!");
+          res.redirect("/campgrounds/" + campground._id);
+        } catch(err) {
+          req.flash('error', err.message);
+          res.redirect('back');
         }
     });
   });
  
   });
-});
 
-
-
-
-
-// // Route to CREATE new Campground from POST request
-// router.post("/", middleware.isLoggedIn, function(req, res){
-//     // get data from form and add to campgrounds array
-//     var name = req.body.name;
-//     var price = req.body.price;
-//     var image = req.body.image;
-//     var description = req.body.description;
-//     var author = {
-//         id: req.user._id, 
-//         username: req.user.username
-//     };
-//     var newCampground = {name: name, price: price, image: image, description: description, author: author};
-//     // Create a new Campground and push it to the database
-//     Campground.create(newCampground, function(err, newlycreatedcampground){
-//         if(err){
-//             console.log("There was an error");
-//             console.log(err);
-//         } else {
-//             // redirect back to campgrounds page
-//             res.redirect("/campgrounds");
-//         }
-//     });
-    
-// });
 
 
 //SHOW  - shows more info about one Campground
@@ -174,10 +161,6 @@ router.get("/:id/edit", middleware.checkCampgroundOwnership, function(req, res){
                   res.render("campgrounds/edit", {campground: foundCampground});
             
        });
-        //does user own the campground?
-        //otherwise redirect
-     //if not redirect
-     
    
 });
 
