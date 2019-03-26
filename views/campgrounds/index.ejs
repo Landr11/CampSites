@@ -3,7 +3,7 @@
 <div>
       <header class="jumbotron ">
            <div class="container">
-               <h1><span class="glyphicon glyphicon-tent"></span>Welcome To CampSites!</h1>
+               <h1><span><i class="fas fa-campground"></i></span>Welcome To CampSites!</h1>
                <p> View all of our Campgrounds from all the world</p>
                <p> <a class="btn btn-primary btn-lg" href="/campgrounds/new">Add New Campground</a> </p>
                <p>
@@ -24,7 +24,7 @@
     
   <!--</div>-->
 
-   <div class="row text-center " style="display:flex; flex-wrap: wrap;">
+   <div class="row text-center " id="campground-grid">
        <div class="col-md-12 ">
            <% if(noMatch !== null) { %>
             <h3><%= noMatch %> </h3>
@@ -43,14 +43,14 @@
        <!--<h2> <strong> Available Campgrounds </strong></h2>-->
     
                    <%   campgrounds.forEach(function(campground){ %>
-              <div class="col-md-3 col-sm-6"> 
-                <div class="thumbnail">
-                  <img src=" <%= campground.image %>">
-                   <div class="caption">
-                      <h4> <%= campground.name %></h4>
+              <div class="col-lg-3 col-md-4 col-sm-6 mb-4"> 
+                <div class="card">
+                  <img  class="card-img-top" alt="<%= campground.name %>" src=" <%= campground.image %>">
+                   <div class="card-body">
+                      <h4 class="card-title"> <%= campground.name %></h4>
                    </div>
-                   <p>
-                       <a href="/campgrounds/<%= campground._id %>" class="btn btn-primary">More Info </a>
+                   <p class="mt-2">
+                       <a href="/campgrounds/<%= campground._id %>" class="btn btn-sm btn-primary">More Info </a>
                    </p>
                 </div>
               </div>

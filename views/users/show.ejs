@@ -1,18 +1,18 @@
 <% include ../partials/header %>
 
-<div class="row">
-    <div class="col-md-4">
-        <h3> <%=user.firstName %> <span> <%=user.lastName %> </span></h3>
-        <div class="thumbnail">
-        <img src="<%= user.avatar %>" alt="User Profile Image">
-        <div class="caption"><a href="mailto:<%=user.email %>"><%=user.email %>  
+<div class=" col-md-8 col-lg-6">
+    <h3 class="card-title"> <%=user.firstName %> <span> <%=user.lastName %> </span></h3>
+    <div class="card">
+        <div>
+        <img  class="img-max rounded" src="<%= user.avatar %>" alt="User Profile Image">
+        <div class="card-body mb-2"><a href="mailto:<%=user.email %>"><%=user.email %>  
         </a>   
-        <span> <% if(currentUser && currentUser._id.equals(user._id)) { %>
+        <div> <% if(currentUser && currentUser._id.equals(user._id)) { %>
            <a class="btn btn-xs btn-primary" href="/users/<%=currentUser.id%>/edit">Edit Profile</a>
            <form class="delete-form" action="/users/<%=currentUser._id%>?_method=DELETE" method="POST">
                <input type="submit" class="btn btn-xs btn-danger"  value="Delete Profile"> 
                 </form>
-        <% } %> </span>
+        <% } %> </div>
         
         <% if(currentUser && user.id !== currentUser.id) { %>
                 <a href="/follow/<%= user.id %>"><button class="btn btn-sm btn-primary">Follow <%= user.username %></button></a>
@@ -20,15 +20,15 @@
         
         </div>
         </div>
-         <p><%= user.description %></p>
-    </div>
-    <div class="col-md-8">
-        <h3><%= user.username %>'s Campgrounds:</h3>
-        <ul>
-       <% campgrounds.forEach(function(campground){ %>
-       <li><a href="/campgrounds/<%=campground.id %>"> <%= campground.name %> </a></lil>
-       <% }); %>
-        </ul>
+        <div class="card-body mb-2"> 
+             <p class="card-text"><span id="about">About Me: </span><%= user.description %></p> 
+             <h3><%= user.username %>'s Campgrounds:</h3>
+             <ul>
+                 <% campgrounds.forEach(function(campground){ %>
+                 <li><a href="/campgrounds/<%=campground.id %>"> <%= campground.name %> </a></lil>
+               <% }); %>
+             </ul>
+        </div>
     </div>
 </div>
 
