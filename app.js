@@ -17,6 +17,7 @@ var seedDB              = require("./seeds");                 //seeding the app 
 
 //Requiring App Routes
 var commentRoutes       = require("./routes/comments"),
+    reviewRoutes     = require("./routes/reviews"),
     campgroundsRoutes   = require("./routes/campgrounds"),
     authRoutes          = require("./routes/index");
 
@@ -94,6 +95,7 @@ app.use(async function(req, res, next){
 app.use("/", authRoutes);
 app.use("/campgrounds", campgroundsRoutes);
 app.use("/campgrounds/:id/comments", commentRoutes);
+app.use("/campgrounds/:id/reviews", reviewRoutes);
 
 
 app.listen(process.env.PORT, process.env.IP, function(){

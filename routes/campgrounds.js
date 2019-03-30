@@ -3,6 +3,7 @@ var router = express.Router();
 var Campground   = require("../models/campground");
 var Comment      = require("../models/comment");
 var Notification = require("../models/notification");
+var Review = require("../models/review");
 var User         = require("../models/user");
 var middleware   = require("../middleware");
 
@@ -159,16 +160,17 @@ router.post("/", middleware.isLoggedIn, upload.single('image'), function(req, re
 //SHOW  - shows more info about one Campground
 router.get("/:id", function(req, res){
     // find the campground with provided ID
-    Campground.findById(req.params.id).populate("comments").exec(function(err, foundCampground){
-        if(err){
+    Campground.findById(req.params.id).populate("comments").populate({
+        path: "reviews",
+        options: {sort: {createdAt: -1}}
+    }).exec(function (err, foundCampground) {
+        if (err) {
             console.log(err);
         } else {
-            //render SHOW(restfult route) template with provided ID
-             res.render("campgrounds/show", {campground: foundCampground});
+            //render show template with that campground
+            res.render("campgrounds/show", {campground: foundCampground});
         }
     });
-    
-    
 });
 
 
@@ -243,24 +245,39 @@ router.put("/:id", middleware.checkCampgroundOwnership, upload.single("image"), 
 
 
 //DESTROY Campground Route
-router.delete("/:id", middleware.checkCampgroundOwnership, function(req, res){
-    Campground.findById(req.params.id, async function(err, campground){
+
+router.delete("/:id", middleware.checkCampgroundOwnership, function(req,res){
+    Campground.findByIdAndRemove(req.params.id, async function(err, campground){
         if(err){
             req.flash("error", err.message);
             return res.redirect("back");
-        } 
-        try{
-            await cloudinary.v2.uploader.destroy(campground.imageId);
-            campground.remove();
-            req.flash("success", "Campground deleted successfully!");
-            res.redirect("/campgrounds");
-        } catch(err) {
-              if(err){
-            req.flash("error", err.message);
-            return res.redirect("back");
-        } 
+        } else {
+            try {
+              //Delete cloudinary picture
+               await cloudinary.v2.uploader.destroy(campground.imageId);
+               // Delete all comments associated with the campground
+                Comment.remove({"_id": {$in: campground.comments}}, function (err) {
+                    if (err) {
+                        console.log(err);
+                        return res.redirect("/campgrounds");
+                    }
+                });
+                //Delete all reviews associated with the campground
+                Review.remove({"_id": {$in: campground.reviews}}, function (err) {
+                    if (err) {
+                        console.log(err);
+                        return res.redirect("/campgrounds");
+                    }
+                });
+                //Delete campgrounds from the database
+               campground.remove();
+               req.flash("success", "Campground deleted.");
+               res.redirect("/campgrounds");
+            } catch (err){
+                req.flash("error", err.message);
+                return res.redirect("back");
+            }
         }
-        
     });
 });
 

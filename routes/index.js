@@ -4,6 +4,7 @@ var passport     = require("passport");
 var User         = require("../models/user");
 var Campground   = require("../models/campground");
 var Comment      = require("../models/comment");
+var Review       = require("../models/review");
 var Notification = require("../models/notification");
 var async        = require("async");
 var nodemailer   = require("nodemailer");
@@ -356,14 +357,20 @@ router.put("/users/:id", upload.single("avatar"), middleware.checkUserOwnership,
             user.description = req.body.user.description; 
             user.email = req.body.user.email;
             user.save();
+            //Update rewiews and rating name to reflect
+            Review.updateMany({"author.id": user._id}, {$set: {"author.username": user.username}}, function(err, review){
+              if(err){
+                console.log(review.author._id);
+              }
+            });
             //Updates Campground Owners Name To Match The New One
-            Campground.update({"author.id": user._id}, {$set: {"author.username": user.username}}, function(err, campground){
+            Campground.updateMany({"author.id": user._id}, {$set: {"author.username": user.username}}, function(err, campground){
                 if(err){
                     console.log(campground.author._id);
                 }
             });
             //Updates Comment Owners Name To Match New One    
-            Comment.update({"author.id": user._id}, {$set: {"author.username": user.username}}, function(err, Comment){
+            Comment.updateMany({"author.id": user._id}, {$set: {"author.username": user.username}}, function(err, Comment){
                 if(err){
                     console.log(Comment.author._id);
                 }
