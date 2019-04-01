@@ -11,7 +11,7 @@ router.get("/", function (req, res) {
         options: {sort: {createdAt: -1}} // sorting the populated reviews array to show the latest first
     }).exec(function (err, campground) {
         if (err || !campground) {
-            req.flash("error", err.message);
+            req.flash("error", "Campground not found!");
             return res.redirect("back");
         }
         res.render("reviews/index", {campground: campground});
