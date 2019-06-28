@@ -22,7 +22,7 @@
         
     Functionalities of campground posts and comments:
 
-        Create, view, edit and delete posts, rate post and comments
+        Create, view, edit and delete posts, rate campgrounds and comments
 
         Upload campground photos from local
 
